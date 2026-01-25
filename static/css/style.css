@@ -1,0 +1,511 @@
+/* MGI CEC Equipment Booking System - Custom Styles */
+
+:root {
+    --primary-color: #0066cc;
+    --primary-dark: #004d99;
+    --secondary-color: #28a745;
+    --accent-color: #6f42c1;
+    --text-color: #333;
+    --text-muted: #6c757d;
+    --bg-light: #f8f9fa;
+    --shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 5px 30px rgba(0, 0, 0, 0.15);
+    --border-radius: 12px;
+    --transition: all 0.3s ease;
+}
+
+/* General Styles */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Navbar */
+.navbar {
+    box-shadow: var(--shadow);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 80px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+}
+
+.hero-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Category Card (Landing Page) */
+.category-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    transition: var(--transition);
+    border-left: 5px solid var(--category-color);
+    cursor: pointer;
+}
+
+.category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.category-card-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.category-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--category-color);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.category-icon i {
+    font-size: 28px;
+    color: white;
+}
+
+.category-info {
+    flex: 1;
+}
+
+.category-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.category-description {
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.equipment-count {
+    display: inline-block;
+    background: var(--bg-light);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.category-arrow {
+    color: var(--category-color);
+    font-size: 1.5rem;
+}
+
+/* Recent Bookings */
+.recent-bookings {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.recent-bookings-title {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.recent-bookings-table {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.recent-bookings-table th {
+    font-weight: 500;
+    color: var(--text-muted);
+    border-top: none;
+}
+
+.recent-bookings-table td {
+    vertical-align: middle;
+}
+
+/* Category Header (Category Page) */
+.category-header {
+    background: linear-gradient(135deg, var(--category-color) 0%, color-mix(in srgb, var(--category-color) 80%, black) 100%);
+    color: white;
+    padding: 40px 0;
+}
+
+.category-header-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-header-icon i {
+    font-size: 36px;
+}
+
+/* Equipment Card (Category Page) */
+.equipment-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: var(--transition);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.equipment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.equipment-image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 100%; /* 1:1 Aspect Ratio */
+    overflow: hidden;
+    background: #f0f0f0;
+}
+
+.equipment-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 15px;
+    transition: var(--transition);
+}
+
+.equipment-card:hover .equipment-image {
+    transform: scale(1.05);
+}
+
+.equipment-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 102, 204, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.equipment-card:hover .equipment-overlay {
+    opacity: 1;
+}
+
+.book-btn {
+    background: white;
+    color: var(--primary-color);
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 600;
+    transform: translateY(10px);
+    transition: var(--transition);
+}
+
+.equipment-card:hover .book-btn {
+    transform: translateY(0);
+}
+
+.equipment-info {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.equipment-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.equipment-actions {
+    margin-top: auto;
+}
+
+/* Booking Header */
+.booking-header {
+    background: linear-gradient(135deg, var(--category-color) 0%, color-mix(in srgb, var(--category-color) 80%, black) 100%);
+    color: white;
+    padding: 30px 0;
+}
+
+.booking-equipment-image {
+    max-height: 100px;
+    background: white;
+    padding: 10px;
+}
+
+/* Info Cards */
+.info-card {
+    padding: 30px 20px;
+}
+
+.info-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+}
+
+.card-header {
+    border-bottom: 1px solid #eee;
+    padding: 16px 20px;
+}
+
+/* Form Styles */
+.form-control, .form-select {
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 10px 20px;
+    transition: var(--transition);
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-lg {
+    padding: 14px 28px;
+    font-size: 1rem;
+}
+
+/* Badge Styles */
+.badge {
+    font-weight: 500;
+    padding: 6px 12px;
+}
+
+/* Footer */
+.footer {
+    margin-top: auto;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Calendar Customizations */
+.fc {
+    font-family: 'Inter', sans-serif;
+}
+
+.fc .fc-button-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.fc .fc-button-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.fc .fc-button-primary:disabled {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+    border-color: #eee;
+}
+
+/* List Group Styles */
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #eee;
+    padding: 12px 0;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 50px 0;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+
+    .category-card-content {
+        flex-wrap: wrap;
+    }
+
+    .category-arrow {
+        display: none;
+    }
+
+    .recent-bookings {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .booking-equipment-image {
+        max-height: 80px;
+        margin-bottom: 15px;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.category-section {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.category-section:nth-child(1) { animation-delay: 0.1s; }
+.category-section:nth-child(2) { animation-delay: 0.2s; }
+.category-section:nth-child(3) { animation-delay: 0.3s; }
+
+/* Table Styles */
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: var(--bg-light);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Modal Styles */
+.modal-content {
+    border: none;
+    border-radius: var(--border-radius);
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+}
+
+.modal-footer {
+    border-top: 1px solid #eee;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}

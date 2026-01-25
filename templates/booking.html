@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}Book {{ equipment.name }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+    .fc-daygrid-event {
+        white-space: normal;
+        font-size: 0.75rem;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 1.25rem;
+    }
+    .fc-timegrid-slot {
+        height: 2.5em !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Booking Header -->
+<section class="booking-header" style="--category-color: {{ category.color }}">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-3">
+                <li class="breadcrumb-item"><a href="/" class="text-white-50">Home</a></li>
+                <li class="breadcrumb-item"><a href="/category/{{ category_key }}" class="text-white-50">{{ category.name }}</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">{{ equipment.name }}</li>
+            </ol>
+        </nav>
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                <img src="/equipment-photos/{{ category.folder }}/{{ equipment.image }}"
+                     alt="{{ equipment.name }}"
+                     class="img-fluid rounded shadow booking-equipment-image">
+            </div>
+            <div class="col-md-10">
+                <h1 class="display-6 fw-bold mb-2">{{ equipment.name }}</h1>
+                <p class="mb-0 opacity-75">
+                    <span class="badge bg-white text-dark me-2">
+                        <i class="fas {{ category.icon }} me-1"></i>{{ category.name }}
+                    </span>
+                    Click on a time slot to make a booking
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Calendar and Booking Form -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Calendar -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                            Booking Calendar
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="calendar"></div>
+                    </div>
+                </div>
+
+                <!-- Existing Bookings -->
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2 text-primary"></i>
+                            Upcoming Bookings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="bookings-list">
+                            <p class="text-muted">Loading bookings...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Form -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm sticky-top" style="top: 80px;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-plus me-2"></i>
+                            New Booking
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="booking-form">
+                            <input type="hidden" id="equipment_id" value="{{ equipment.id }}">
+                            <input type="hidden" id="equipment_name" value="{{ equipment.name }}">
+                            <input type="hidden" id="category" value="{{ category_key }}">
+
+                            <div class="mb-3">
+                                <label for="user_name" class="form-label">
+                                    <i class="fas fa-user me-1"></i> Your Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="user_name"
+                                       placeholder="Enter your full name" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="affiliation" class="form-label">
+                                    <i class="fas fa-building me-1"></i> Affiliation / Lab <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="affiliation"
+                                       placeholder="e.g., NUS Life Sciences Lab" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="booking_date" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i> Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control" id="booking_date" required>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="start_time" class="form-label">
+                                            <i class="fas fa-clock me-1"></i> Start Time <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="time" class="form-control" id="start_time" required>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="end_time" class="form-label">
+                                            <i class="fas fa-clock me-1"></i> End Time <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="time" class="form-control" id="end_time" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">
+                                    <i class="fas fa-sticky-note me-1"></i> Notes (Optional)
+                                </label>
+                                <textarea class="form-control" id="notes" rows="2"
+                                          placeholder="Any special requirements..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                <i class="fas fa-check me-2"></i>Confirm Booking
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Back Link -->
+<section class="py-4 bg-light">
+    <div class="container text-center">
+        <a href="/category/{{ category_key }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to {{ category.name }}
+        </a>
+    </div>
+</section>
+
+<!-- Booking Details Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Booking Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="delete-booking-btn">
+                    <i class="fas fa-trash me-1"></i>Cancel Booking
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const equipmentId = document.getElementById('equipment_id').value;
+    const equipmentName = document.getElementById('equipment_name').value;
+    const category = document.getElementById('category').value;
+
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('booking_date').value = today;
+    document.getElementById('booking_date').min = today;
+
+    // Initialize calendar
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        slotMinTime: '07:00:00',
+        slotMaxTime: '22:00:00',
+        allDaySlot: false,
+        selectable: true,
+        selectMirror: true,
+        eventColor: '{{ category.color }}',
+        events: function(info, successCallback, failureCallback) {
+            fetch(`/api/bookings?equipment_id=${equipmentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const events = data.map(booking => ({
+                        id: booking.id,
+                        title: `${booking.user_name} (${booking.affiliation})`,
+                        start: `${booking.booking_date}T${booking.start_time}`,
+                        end: `${booking.booking_date}T${booking.end_time}`,
+                        extendedProps: booking
+                    }));
+                    successCallback(events);
+                })
+                .catch(error => {
+                    console.error('Error fetching events:', error);
+                    failureCallback(error);
+                });
+        },
+        select: function(info) {
+            document.getElementById('booking_date').value = info.startStr.split('T')[0];
+            if (info.startStr.includes('T')) {
+                document.getElementById('start_time').value = info.startStr.split('T')[1].substring(0, 5);
+                document.getElementById('end_time').value = info.endStr.split('T')[1].substring(0, 5);
+            }
+            document.getElementById('user_name').focus();
+        },
+        eventClick: function(info) {
+            const booking = info.event.extendedProps;
+            document.getElementById('modal-body').innerHTML = `
+                <table class="table table-borderless">
+                    <tr><th>User:</th><td>${booking.user_name}</td></tr>
+                    <tr><th>Affiliation:</th><td>${booking.affiliation}</td></tr>
+                    <tr><th>Date:</th><td>${booking.booking_date}</td></tr>
+                    <tr><th>Time:</th><td>${booking.start_time} - ${booking.end_time}</td></tr>
+                    ${booking.notes ? `<tr><th>Notes:</th><td>${booking.notes}</td></tr>` : ''}
+                </table>
+            `;
+            document.getElementById('delete-booking-btn').onclick = function() {
+                if (confirm('Are you sure you want to cancel this booking?')) {
+                    deleteBooking(booking.id);
+                }
+            };
+            new bootstrap.Modal(document.getElementById('bookingModal')).show();
+        }
+    });
+    calendar.render();
+
+    // Load bookings list
+    function loadBookingsList() {
+        fetch(`/api/bookings?equipment_id=${equipmentId}`)
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('bookings-list');
+                if (data.length === 0) {
+                    container.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>No bookings scheduled</p>';
+                    return;
+                }
+
+                // Filter future bookings
+                const today = new Date().toISOString().split('T')[0];
+                const futureBookings = data.filter(b => b.booking_date >= today);
+
+                if (futureBookings.length === 0) {
+                    container.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>No upcoming bookings</p>';
+                    return;
+                }
+
+                let html = '<div class="list-group list-group-flush">';
+                futureBookings.slice(0, 10).forEach(booking => {
+                    html += `
+                        <div class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${booking.user_name}</strong>
+                                <small class="text-muted d-block">${booking.affiliation}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary">${booking.booking_date}</span>
+                                <small class="text-muted d-block">${booking.start_time} - ${booking.end_time}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading bookings:', error);
+            });
+    }
+    loadBookingsList();
+
+    // Form submission
+    document.getElementById('booking-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const startTime = document.getElementById('start_time').value;
+        const endTime = document.getElementById('end_time').value;
+
+        if (startTime >= endTime) {
+            alert('End time must be after start time');
+            return;
+        }
+
+        const data = {
+            equipment_id: equipmentId,
+            equipment_name: equipmentName,
+            category: category,
+            user_name: document.getElementById('user_name').value,
+            affiliation: document.getElementById('affiliation').value,
+            booking_date: document.getElementById('booking_date').value,
+            start_time: startTime,
+            end_time: endTime,
+            notes: document.getElementById('notes').value
+        };
+
+        fetch('/api/bookings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.error) {
+                alert('Booking failed: ' + result.error);
+            } else {
+                alert('Booking confirmed!');
+                calendar.refetchEvents();
+                loadBookingsList();
+                // Reset form except user info
+                document.getElementById('notes').value = '';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    });
+
+    // Delete booking
+    function deleteBooking(bookingId) {
+        fetch(`/api/bookings/${bookingId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+                calendar.refetchEvents();
+                loadBookingsList();
+                alert('Booking cancelled successfully');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+});
+</script>
+{% endblock %}

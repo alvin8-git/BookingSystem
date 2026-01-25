@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }}{% endblock %}
+
+{% block content %}
+<!-- Category Header -->
+<section class="category-header" style="--category-color: {{ category.color }}">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-3">
+                <li class="breadcrumb-item"><a href="/" class="text-white-50">Home</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">{{ category.name }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex align-items-center">
+            <div class="category-header-icon me-4">
+                <i class="fas {{ category.icon }}"></i>
+            </div>
+            <div>
+                <h1 class="display-5 fw-bold mb-2">{{ category.name }}</h1>
+                <p class="lead mb-0 opacity-75">{{ category.description }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Equipment Grid -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">
+                <i class="fas fa-desktop me-2 text-primary"></i>
+                Available Equipment
+            </h4>
+            <span class="badge bg-primary fs-6">{{ equipment|length }} Items</span>
+        </div>
+
+        {% if equipment %}
+        <div class="row g-4">
+            {% for item in equipment %}
+            <div class="col-sm-6 col-lg-4 col-xl-3">
+                <a href="/book/{{ category_key }}/{{ item.id }}" class="text-decoration-none">
+                    <div class="equipment-card">
+                        <div class="equipment-image-wrapper">
+                            <img src="/equipment-photos/{{ category.folder }}/{{ item.image }}"
+                                 alt="{{ item.name }}"
+                                 class="equipment-image"
+                                 loading="lazy">
+                            <div class="equipment-overlay">
+                                <span class="book-btn">
+                                    <i class="fas fa-calendar-plus me-2"></i>Book Now
+                                </span>
+                            </div>
+                        </div>
+                        <div class="equipment-info">
+                            <h5 class="equipment-name">{{ item.name }}</h5>
+                            <div class="equipment-actions">
+                                <span class="text-primary small">
+                                    <i class="fas fa-arrow-right me-1"></i>View Calendar
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            No equipment found in this category.
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Back to Categories -->
+<section class="py-4 bg-light">
+    <div class="container text-center">
+        <a href="/" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to All Categories
+        </a>
+    </div>
+</section>
+{% endblock %}
