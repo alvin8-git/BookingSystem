@@ -170,6 +170,42 @@
     </div>
 </section>
 
+<!-- Toast Container -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="successToastBody">
+            Operation completed successfully!
+        </div>
+    </div>
+    
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="errorToastBody">
+            An error occurred!
+        </div>
+    </div>
+    
+    <div id="warningToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-warning text-dark">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong class="me-auto">Warning</strong>
+            <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="warningToastBody">
+            Please check your input!
+        </div>
+    </div>
+</div>
+
 <!-- Booking Details Modal -->
 <div class="modal fade" id="bookingModal" tabindex="-1">
     <div class="modal-dialog">
@@ -318,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const endTime = document.getElementById('end_time').value;
 
         if (startTime >= endTime) {
-            alert('End time must be after start time');
+            showToast('warning', 'End time must be after start time');
             return;
         }
 
@@ -344,9 +380,13 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(result => {
             if (result.error) {
-                alert('Booking failed: ' + result.error);
+                if (result.details) {
+                    showToast('error', result.details.join(', '));
+                } else {
+                    showToast('error', result.error);
+                }
             } else {
-                alert('Booking confirmed!');
+                showToast('success', result.message || 'Booking confirmed!');
                 calendar.refetchEvents();
                 loadBookingsList();
                 // Reset form except user info
@@ -355,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            showToast('error', 'An error occurred. Please try again.');
         });
     });
 
@@ -370,13 +410,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
                 calendar.refetchEvents();
                 loadBookingsList();
-                alert('Booking cancelled successfully');
+                showToast('success', result.message || 'Booking cancelled successfully');
             }
         })
-        .catch(error => {
+.catch(error => {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            showToast('error', 'An error occurred. Please try again.');
         });
+    });
+
+    // Toast notification function
+    function showToast(type, message) {
+        const toastId = type + 'Toast';
+        const toastBodyId = type + 'ToastBody';
+        const toastElement = document.getElementById(toastId);
+        const toastBody = document.getElementById(toastBodyId);
+        
+        toastBody.textContent = message;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
     }
 });
 </script>
