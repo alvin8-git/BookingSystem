@@ -1,5 +1,6 @@
 """
-MGI Singapore CEC Equipment Booking System
+MGI Singapore CEC Equipment Booking System v1.1.0
+Production-ready equipment booking system with WSGI deployment
 """
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -446,6 +447,7 @@ def health_check():
             
             return jsonify({
                 'status': 'healthy',
+                'version': '1.1.0',
                 'database': 'connected',
                 'total_bookings': count,
                 'config': {

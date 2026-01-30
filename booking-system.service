@@ -1,0 +1,31 @@
+# Systemd service file for Booking System Application
+# Place this file in /etc/systemd/system/booking-system.service
+
+[Unit]
+Description=Booking System Web Application
+After=network.target
+
+[Service]
+Type=notify
+User=alvin
+Group=alvin
+WorkingDirectory=/data/alvin/BookingSystem
+Environment=PATH=/home/alvin/miniconda3/bin
+ExecStart=/home/alvin/miniconda3/bin/gunicorn --config gunicorn.conf.py wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/data/alvin/BookingSystem/logs/systemd.log
+StandardError=append:/data/alvin/BookingSystem/logs/systemd_error.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/data/alvin/BookingSystem
+
+[Install]
+WantedBy=multi-user.target
