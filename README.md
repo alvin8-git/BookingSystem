@@ -196,8 +196,12 @@ BUSINESS_HOURS_END=22:00
 - `POST /api/bookings` - Create new booking
 - `DELETE /api/bookings/<id>` - Cancel booking
 
+### Equipment Management
+- `GET /api/equipment` - Get equipment list from registry
+- `POST /api/equipment/sync` - Trigger equipment synchronization
+
 ### System
-- `GET /api/health` - Health check endpoint
+- `GET /api/health` - Health check endpoint (includes version info)
 - `GET /equipment-photos/<path>` - Serve equipment photos
 
 ### Web Pages
@@ -207,6 +211,24 @@ BUSINESS_HOURS_END=22:00
 
 ## 🔧 Maintenance
 
+### Equipment Management
+```bash
+# Update equipment registry after photo changes
+./deploy.sh update
+
+# Sync equipment and restart application
+./deploy.sh sync
+
+# View equipment status
+./update_equipment.sh status
+
+# Show recent equipment changes
+./update_equipment.sh changes
+
+# Manual equipment registry update
+./update_equipment.sh update
+```
+
 ### Database Management
 ```bash
 # Backup database
@@ -215,6 +237,7 @@ cp bookings.db bookings_backup_$(date +%Y%m%d).db
 # View database stats
 sqlite3 bookings.db ".schema"
 sqlite3 bookings.db "SELECT COUNT(*) FROM bookings;"
+sqlite3 bookings.db "SELECT COUNT(*) FROM equipment_registry;"
 ```
 
 ### Log Management
@@ -225,6 +248,9 @@ tail -f server.log
 # View production logs
 tail -f logs/access.log
 tail -f logs/error.log
+
+# View equipment update logs
+tail -f logs/equipment_update.log
 
 # Log rotation (add to crontab)
 find logs/ -name "*.log" -mtime +30 -delete
@@ -244,7 +270,17 @@ netstat -tlnp | grep -E ':(8001|8118)'
 
 ## 🆕 Version History
 
-### v1.1.0 (Current)
+### v1.1.1 (Current)
+- **New**: Automatic equipment photo detection and synchronization
+- **New**: Equipment registry database with file change tracking
+- **New**: Smart photo update detection using file hashing
+- **New**: Equipment management commands (`deploy.sh update`, `deploy.sh sync`)
+- **New**: Dedicated equipment update script (`update_equipment.sh`)
+- **New**: API endpoints for equipment management
+- **Improved**: Robust equipment listing with database fallback
+- **Improved**: Comprehensive equipment change logging and reporting
+
+### v1.1.0
 - **New**: Production deployment with Gunicorn WSGI
 - **New**: Nginx reverse proxy configuration
 - **New**: Systemd service integration

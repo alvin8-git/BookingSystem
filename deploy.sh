@@ -117,6 +117,24 @@ show_status() {
     fi
 }
 
+# Function to update equipment registry
+update_equipment() {
+    echo -e "${GREEN}Updating equipment registry...${NC}"
+    
+    # Change to application directory
+    cd "$APP_DIR"
+    
+    # Initialize database if needed
+    python3 -c "from app import init_db, sync_equipment_registry; init_db(); result = sync_equipment_registry(); print(f'Changes: {result}')" 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Equipment registry updated successfully${NC}"
+    else
+        echo -e "${RED}Failed to update equipment registry${NC}"
+        return 1
+    fi
+}
+
 # Function to show logs
 show_logs() {
     echo -e "${GREEN}Showing recent logs...${NC}"
@@ -142,13 +160,25 @@ case "${1:-start}" in
     logs)
         show_logs
         ;;
+    update)
+        update_equipment
+        ;;
+    sync)
+        update_equipment
+        echo -e "${GREEN}Restarting application to apply changes...${NC}"
+        if is_running; then
+            restart_app
+        fi
+        ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status|logs}"
+        echo "Usage: $0 {start|stop|restart|status|logs|update|sync}"
         echo "  start   - Start the application"
         echo "  stop    - Stop the application"
         echo "  restart - Restart the application"
         echo "  status  - Show application status"
         echo "  logs    - Show recent logs"
+        echo "  update  - Update equipment registry with photo changes"
+        echo "  sync    - Update equipment and restart application"
         exit 1
         ;;
 esac

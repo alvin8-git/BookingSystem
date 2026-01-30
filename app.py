@@ -10,6 +10,7 @@ from datetime import datetime, time
 import json
 import re
 import logging
+import hashlib
 from werkzeug.exceptions import BadRequest, NotFound, Conflict, InternalServerError
 from dotenv import load_dotenv
 
@@ -177,6 +178,22 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
+    # Create equipment registry table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS equipment_registry (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            equipment_id TEXT UNIQUE NOT NULL,
+            equipment_name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            image_filename TEXT NOT NULL,
+            file_hash TEXT NOT NULL,
+            folder_path TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_active BOOLEAN DEFAULT 1
+        )
+    ''')
+    
     # Create bookings table with proper constraints
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
@@ -197,6 +214,16 @@ def init_db():
     ''')
     
     # Create indexes for performance optimization
+    cursor.execute('''
+        CREATE INDEX IF NOT EXISTS idx_equipment_registry_category 
+        ON equipment_registry(category)
+    ''')
+    
+    cursor.execute('''
+        CREATE INDEX IF NOT EXISTS idx_equipment_registry_equipment_id 
+        ON equipment_registry(equipment_id)
+    ''')
+    
     cursor.execute('''
         CREATE INDEX IF NOT EXISTS idx_bookings_equipment_date 
         ON bookings(equipment_id, booking_date)
@@ -219,10 +246,36 @@ def init_db():
     
     conn.commit()
     conn.close()
-    logger.info("Database initialized with optimized schema and indexes")
+    logger.info("Database initialized with optimized schema and equipment registry")
 
 def get_equipment_list(category_key):
-    """Get list of equipment from photos directory"""
+    """Get list of equipment from registry database"""
+    try:
+        # Try to get from registry first
+        registry_equipment = get_equipment_from_registry(category_key, active_only=True)
+        
+        if registry_equipment:
+            # Convert registry format to expected format
+            equipment = []
+            for eq in registry_equipment:
+                equipment.append({
+                    'id': eq['equipment_id'],
+                    'name': eq['equipment_name'],
+                    'image': eq['image_filename'],
+                    'category': eq['category']
+                })
+            return sorted(equipment, key=lambda x: x['name'])
+        
+        # Fallback to filesystem scanning if registry is empty
+        logger.warning("Equipment registry is empty, falling back to filesystem scan")
+        return get_equipment_list_fallback(category_key)
+        
+    except Exception as e:
+        logger.error(f"Error getting equipment from registry: {e}")
+        return get_equipment_list_fallback(category_key)
+
+def get_equipment_list_fallback(category_key):
+    """Fallback method: Get list of equipment from photos directory"""
     if category_key not in CATEGORIES:
         return []
 
@@ -245,6 +298,153 @@ def get_equipment_list(category_key):
             })
 
     return sorted(equipment, key=lambda x: x['name'])
+
+def get_file_hash(file_path):
+    """Calculate MD5 hash of a file for change detection"""
+    hash_md5 = hashlib.md5()
+    try:
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+    except Exception as e:
+        logger.error(f"Error calculating hash for {file_path}: {e}")
+        return None
+
+def scan_equipment_photos():
+    """Scan all equipment photos and return current state with hashes"""
+    current_equipment = []
+    
+    for category_key, category_data in CATEGORIES.items():
+        folder = category_data['folder']
+        folder_path = os.path.join(EQUIPMENT_PHOTOS_DIR, folder)
+        
+        if not os.path.exists(folder_path):
+            logger.warning(f"Equipment folder not found: {folder_path}")
+            continue
+            
+        for filename in os.listdir(folder_path):
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.avif')):
+                file_path = os.path.join(folder_path, filename)
+                name = os.path.splitext(filename)[0]
+                equipment_id = name.lower().replace(' ', '_').replace('+', 'plus')
+                file_hash = get_file_hash(file_path)
+                
+                if file_hash:
+                    current_equipment.append({
+                        'equipment_id': equipment_id,
+                        'equipment_name': name,
+                        'category': category_key,
+                        'image_filename': filename,
+                        'folder_path': folder_path,
+                        'file_hash': file_hash
+                    })
+    
+    return current_equipment
+
+def sync_equipment_registry():
+    """Synchronize equipment registry with current photos in folders"""
+    try:
+        # Get current equipment from filesystem
+        current_equipment = scan_equipment_photos()
+        current_ids = {eq['equipment_id'] for eq in current_equipment}
+        
+        with DatabaseManager() as conn:
+            cursor = conn.cursor()
+            
+            # Get existing equipment from registry
+            cursor.execute('SELECT equipment_id, file_hash FROM equipment_registry WHERE is_active = 1')
+            existing_equipment = {row[0]: row[1] for row in cursor.fetchall()}
+            existing_ids = set(existing_equipment.keys())
+            
+            # Equipment changes tracking
+            new_equipment = current_ids - existing_ids
+            removed_equipment = existing_ids - current_ids
+            existing_in_both = current_ids & existing_ids
+            
+            # Add new equipment
+            added_count = 0
+            for equipment_id in new_equipment:
+                equipment = next(eq for eq in current_equipment if eq['equipment_id'] == equipment_id)
+                cursor.execute('''
+                    INSERT INTO equipment_registry 
+                    (equipment_id, equipment_name, category, image_filename, file_hash, folder_path)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (equipment['equipment_id'], equipment['equipment_name'], 
+                      equipment['category'], equipment['image_filename'], 
+                      equipment['file_hash'], equipment['folder_path']))
+                added_count += 1
+                logger.info(f"Added new equipment: {equipment['equipment_name']} ({equipment['category']})")
+            
+            # Mark removed equipment as inactive
+            removed_count = 0
+            for equipment_id in removed_equipment:
+                cursor.execute('''
+                    UPDATE equipment_registry 
+                    SET is_active = 0, updated_at = CURRENT_TIMESTAMP 
+                    WHERE equipment_id = ?
+                ''', (equipment_id,))
+                removed_count += 1
+                logger.info(f"Marked equipment as inactive: {equipment_id}")
+            
+            # Check for updated photos (different file hash)
+            updated_count = 0
+            for equipment_id in existing_in_both:
+                current_eq = next(eq for eq in current_equipment if eq['equipment_id'] == equipment_id)
+                if existing_equipment[equipment_id] != current_eq['file_hash']:
+                    cursor.execute('''
+                        UPDATE equipment_registry 
+                        SET file_hash = ?, updated_at = CURRENT_TIMESTAMP 
+                        WHERE equipment_id = ?
+                    ''', (current_eq['file_hash'], equipment_id))
+                    updated_count += 1
+                    logger.info(f"Updated equipment photo: {current_eq['equipment_name']}")
+            
+            # Log summary
+            total_changes = added_count + removed_count + updated_count
+            if total_changes > 0:
+                logger.info(f"Equipment registry synchronized: +{added_count} added, -{removed_count} removed, ~{updated_count} updated")
+            else:
+                logger.info("Equipment registry: No changes detected")
+            
+            return {
+                'added': added_count,
+                'removed': removed_count,
+                'updated': updated_count,
+                'total': total_changes
+            }
+            
+    except Exception as e:
+        logger.error(f"Error syncing equipment registry: {e}")
+        return {'error': str(e)}
+
+def get_equipment_from_registry(category_key=None, active_only=True):
+    """Get equipment from registry database"""
+    try:
+        with DatabaseManager() as conn:
+            cursor = conn.cursor()
+            
+            query = 'SELECT * FROM equipment_registry'
+            params = []
+            
+            conditions = []
+            if active_only:
+                conditions.append('is_active = 1')
+            if category_key:
+                conditions.append('category = ?')
+                params.append(category_key)
+            
+            if conditions:
+                query += ' WHERE ' + ' AND '.join(conditions)
+            
+            query += ' ORDER BY category, equipment_name'
+            
+            cursor.execute(query, params)
+            return [dict(row) for row in cursor.fetchall()]
+            
+    except Exception as e:
+        logger.error(f"Error getting equipment from registry: {e}")
+        return []
 
 def get_recent_bookings(category_key=None, limit=5):
     """Get recent bookings, optionally filtered by category"""
@@ -434,6 +634,44 @@ def delete_booking(booking_id):
         return jsonify({'error': 'Database error occurred'}), 500
     except Exception as e:
         logger.error(f"Unexpected error deleting booking {booking_id}: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/equipment', methods=['GET'])
+def get_equipment_api():
+    """API endpoint to get equipment list from registry"""
+    try:
+        category_key = request.args.get('category')
+        active_only = request.args.get('active', 'true').lower() == 'true'
+        
+        equipment = get_equipment_from_registry(category_key, active_only)
+        
+        return jsonify({
+            'success': True,
+            'data': equipment,
+            'count': len(equipment)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching equipment: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/equipment/sync', methods=['POST'])
+def sync_equipment_api():
+    """API endpoint to trigger equipment synchronization"""
+    try:
+        result = sync_equipment_registry()
+        
+        if 'error' in result:
+            return jsonify({'success': False, 'error': result['error']}), 500
+        
+        return jsonify({
+            'success': True,
+            'message': 'Equipment synchronized successfully',
+            'changes': result
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in equipment sync API: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/api/health', methods=['GET'])
