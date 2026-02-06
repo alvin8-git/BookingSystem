@@ -7,8 +7,10 @@ A comprehensive web-based equipment booking system for managing laboratory equip
 ### Core Functionality
 - **Equipment Management**: Browse and book laboratory equipment by category
 - **Real-time Availability**: View current bookings and time slot availability
+- **Multi-day Bookings**: Support for bookings spanning multiple days with start/end dates
+- **Backdated Bookings**: Create bookings for past dates (e.g., recording historical usage)
 - **User-friendly Interface**: Intuitive booking interface with photo previews
-- **Conflict Prevention**: Automatic detection of double-bookings
+- **Conflict Prevention**: Automatic detection of double-bookings across date ranges
 - **Business Hours**: Configurable booking time restrictions
 - **Validation**: Comprehensive input validation and error handling
 
@@ -192,8 +194,8 @@ BUSINESS_HOURS_END=22:00
 ## 📊 API Endpoints
 
 ### Booking Management
-- `GET /api/bookings` - List all bookings or by equipment
-- `POST /api/bookings` - Create new booking
+- `GET /api/bookings` - List all bookings or filter by equipment (`?equipment_id=...`)
+- `POST /api/bookings` - Create new booking (supports `end_date` for multi-day bookings)
 - `DELETE /api/bookings/<id>` - Cancel booking
 
 ### Equipment Management
@@ -270,7 +272,17 @@ netstat -tlnp | grep -E ':(8001|8118)'
 
 ## 🆕 Version History
 
-### v1.1.1 (Current)
+### v1.2.0 (Current)
+- **New**: Multi-day booking support with start date and end date fields
+- **New**: Backdated bookings — create bookings for past dates
+- **New**: Multi-day conflict detection across full date/time ranges
+- **Fixed**: Booking page stall caused by JavaScript syntax error in `deleteBooking`
+- **Fixed**: API response format mismatch (`data.data` not accessed correctly)
+- **Improved**: Calendar displays multi-day bookings spanning across days
+- **Improved**: Booking list and detail modal show date ranges
+- **Changed**: Database schema migrated — removed future-date-only constraint, added `end_date` column
+
+### v1.1.1
 - **New**: Automatic equipment photo detection and synchronization
 - **New**: Equipment registry database with file change tracking
 - **New**: Smart photo update detection using file hashing
@@ -369,4 +381,4 @@ This software is proprietary to MGI Singapore CEC. All rights reserved.
 
 ---
 
-**Note**: This documentation is for v1.1.0. For version-specific instructions, refer to the version history section.
+**Note**: This documentation is for v1.2.0. For version-specific instructions, refer to the version history section.
