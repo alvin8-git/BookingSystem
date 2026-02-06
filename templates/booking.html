@@ -116,11 +116,23 @@
                                        placeholder="e.g., NUS Life Sciences Lab" required>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="booking_date" class="form-label">
-                                    <i class="fas fa-calendar me-1"></i> Date <span class="text-danger">*</span>
-                                </label>
-                                <input type="date" class="form-control" id="booking_date" required>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="booking_date" class="form-label">
+                                            <i class="fas fa-calendar me-1"></i> Start Date <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" class="form-control" id="booking_date" required>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="end_date" class="form-label">
+                                            <i class="fas fa-calendar-check me-1"></i> End Date <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" class="form-control" id="end_date" required>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row">
@@ -235,10 +247,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const equipmentName = document.getElementById('equipment_name').value;
     const category = document.getElementById('category').value;
 
-    // Set default date to today
+    // Set default dates to today (no min restriction to allow backdated bookings)
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking_date').value = today;
-    document.getElementById('booking_date').min = today;
+    document.getElementById('end_date').value = today;
+
+    // Keep end_date in sync when start date changes
+    document.getElementById('booking_date').addEventListener('change', function() {
+        const endDate = document.getElementById('end_date');
+        if (endDate.value < this.value) {
+            endDate.value = this.value;
+        }
+    });
 
     // Initialize calendar
     const calendarEl = document.getElementById('calendar');
@@ -259,13 +279,16 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(`/api/bookings?equipment_id=${equipmentId}`)
                 .then(response => response.json())
                 .then(data => {
-                    const events = (data.data || []).map(booking => ({
-                        id: booking.id,
-                        title: `${booking.user_name} (${booking.affiliation})`,
-                        start: `${booking.booking_date}T${booking.start_time}`,
-                        end: `${booking.booking_date}T${booking.end_time}`,
-                        extendedProps: booking
-                    }));
+                    const events = (data.data || []).map(booking => {
+                        const endDate = booking.end_date || booking.booking_date;
+                        return {
+                            id: booking.id,
+                            title: `${booking.user_name} (${booking.affiliation})`,
+                            start: `${booking.booking_date}T${booking.start_time}`,
+                            end: `${endDate}T${booking.end_time}`,
+                            extendedProps: booking
+                        };
+                    });
                     successCallback(events);
                 })
                 .catch(error => {
@@ -275,6 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         select: function(info) {
             document.getElementById('booking_date').value = info.startStr.split('T')[0];
+            document.getElementById('end_date').value = info.endStr.split('T')[0] || info.startStr.split('T')[0];
             if (info.startStr.includes('T')) {
                 document.getElementById('start_time').value = info.startStr.split('T')[1].substring(0, 5);
                 document.getElementById('end_time').value = info.endStr.split('T')[1].substring(0, 5);
@@ -283,11 +307,15 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         eventClick: function(info) {
             const booking = info.event.extendedProps;
+            const endDate = booking.end_date || booking.booking_date;
+            const dateDisplay = booking.booking_date === endDate
+                ? booking.booking_date
+                : `${booking.booking_date} to ${endDate}`;
             document.getElementById('modal-body').innerHTML = `
                 <table class="table table-borderless">
                     <tr><th>User:</th><td>${booking.user_name}</td></tr>
                     <tr><th>Affiliation:</th><td>${booking.affiliation}</td></tr>
-                    <tr><th>Date:</th><td>${booking.booking_date}</td></tr>
+                    <tr><th>Date:</th><td>${dateDisplay}</td></tr>
                     <tr><th>Time:</th><td>${booking.start_time} - ${booking.end_time}</td></tr>
                     ${booking.notes ? `<tr><th>Notes:</th><td>${booking.notes}</td></tr>` : ''}
                 </table>
@@ -316,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Filter future bookings
                 const today = new Date().toISOString().split('T')[0];
-                const futureBookings = bookings.filter(b => b.booking_date >= today);
+                const futureBookings = bookings.filter(b => (b.end_date || b.booking_date) >= today);
 
                 if (futureBookings.length === 0) {
                     container.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>No upcoming bookings</p>';
@@ -332,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <small class="text-muted d-block">${booking.affiliation}</small>
                             </div>
                             <div class="text-end">
-                                <span class="badge bg-primary">${booking.booking_date}</span>
+                                <span class="badge bg-primary">${booking.booking_date}${booking.end_date && booking.end_date !== booking.booking_date ? ' to ' + booking.end_date : ''}</span>
                                 <small class="text-muted d-block">${booking.start_time} - ${booking.end_time}</small>
                             </div>
                         </div>
@@ -353,8 +381,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const startTime = document.getElementById('start_time').value;
         const endTime = document.getElementById('end_time').value;
+        const bookingDate = document.getElementById('booking_date').value;
+        const endDate = document.getElementById('end_date').value;
 
-        if (startTime >= endTime) {
+        if (endDate < bookingDate) {
+            showToast('warning', 'End date cannot be before start date');
+            return;
+        }
+
+        // For single-day bookings, end time must be after start time
+        if (bookingDate === endDate && startTime >= endTime) {
             showToast('warning', 'End time must be after start time');
             return;
         }
@@ -365,7 +401,8 @@ document.addEventListener('DOMContentLoaded', function() {
             category: category,
             user_name: document.getElementById('user_name').value,
             affiliation: document.getElementById('affiliation').value,
-            booking_date: document.getElementById('booking_date').value,
+            booking_date: bookingDate,
+            end_date: endDate,
             start_time: startTime,
             end_time: endTime,
             notes: document.getElementById('notes').value

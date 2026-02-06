@@ -54,68 +54,74 @@ NAME_PATTERN = re.compile(r'^[a-zA-Z\s\-\.\']+$')
 def validate_booking_data(data):
     """Validate booking data server-side"""
     errors = []
-    booking_date = None
-    
+    start_date = None
+    end_date = None
+
     # Required fields validation
     required_fields = ['equipment_id', 'equipment_name', 'category',
                       'user_name', 'affiliation', 'booking_date',
                       'start_time', 'end_time']
-    
+
     for field in required_fields:
         if field not in data or not data[field]:
             errors.append(f'{field} is required')
-    
+
     if errors:
         return errors
-    
+
     # Name validation
     if not NAME_PATTERN.match(data['user_name']) or len(data['user_name'].strip()) < 2:
         errors.append('Invalid user name')
-    
+
     # Affiliation validation
     if len(data['affiliation'].strip()) < 3:
         errors.append('Affiliation must be at least 3 characters')
-    
-    # Date validation
+
+    # Date validation (backdated bookings allowed)
     try:
-        booking_date = datetime.strptime(data['booking_date'], '%Y-%m-%d').date()
-        if booking_date < datetime.now().date():
-            errors.append('Booking date cannot be in the past')
+        start_date = datetime.strptime(data['booking_date'], '%Y-%m-%d').date()
     except ValueError:
-        errors.append('Invalid date format')
-    
+        errors.append('Invalid start date format')
+
+    # End date validation
+    end_date_str = data.get('end_date', data['booking_date'])
+    try:
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        if start_date and end_date < start_date:
+            errors.append('End date cannot be before start date')
+    except ValueError:
+        errors.append('Invalid end date format')
+
     # Time validation
     try:
         start_time = datetime.strptime(data['start_time'], '%H:%M').time()
         end_time = datetime.strptime(data['end_time'], '%H:%M').time()
-        
-        if start_time >= end_time:
-            errors.append('End time must be after start time')
-            
+
+        # For single-day bookings, end time must be after start time
+        if start_date and end_date and start_date == end_date:
+            if start_time >= end_time:
+                errors.append('End time must be after start time for single-day bookings')
+
         # Business hours validation
         business_start = datetime.strptime(BUSINESS_HOURS_START, '%H:%M').time()
         business_end = datetime.strptime(BUSINESS_HOURS_END, '%H:%M').time()
         if start_time < business_start or end_time > business_end:
             errors.append(f'Bookings must be between {BUSINESS_HOURS_START} and {BUSINESS_HOURS_END}')
-            
-        # Minimum booking duration
-        if booking_date:
-            duration_minutes = (datetime.combine(booking_date, end_time) - 
-                               datetime.combine(booking_date, start_time)).total_seconds() / 60
+
+        # Duration validation for single-day bookings
+        if start_date and end_date and start_date == end_date:
+            duration_minutes = (datetime.combine(start_date, end_time) -
+                               datetime.combine(start_date, start_time)).total_seconds() / 60
             if duration_minutes < MIN_BOOKING_DURATION:
                 errors.append(f'Minimum booking duration is {MIN_BOOKING_DURATION} minutes')
-                
-            # Maximum booking duration
-            if duration_minutes > MAX_BOOKING_DURATION:
-                errors.append(f'Maximum booking duration is {MAX_BOOKING_DURATION // 60} hours')
-            
+
     except ValueError:
         errors.append('Invalid time format')
-    
+
     # Category validation
     if data['category'] not in CATEGORIES:
         errors.append('Invalid category')
-    
+
     return errors
 
 # Category mapping
@@ -194,7 +200,7 @@ def init_db():
         )
     ''')
     
-    # Create bookings table with proper constraints
+    # Create bookings table (allows backdated and multi-day bookings)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -204,14 +210,47 @@ def init_db():
             user_name TEXT NOT NULL,
             affiliation TEXT NOT NULL,
             booking_date DATE NOT NULL,
+            end_date DATE,
             start_time TIME NOT NULL,
             end_time TIME NOT NULL,
             notes TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            CHECK (start_time < end_time),
-            CHECK (booking_date >= date('now'))
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    # Migration: add end_date column if missing, and recreate table if old CHECK constraints exist
+    cursor.execute("PRAGMA table_info(bookings)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if 'end_date' not in columns:
+        logger.info("Migrating bookings table: adding end_date, removing CHECK constraints")
+        cursor.execute('''
+            CREATE TABLE bookings_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                equipment_id TEXT NOT NULL,
+                equipment_name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                user_name TEXT NOT NULL,
+                affiliation TEXT NOT NULL,
+                booking_date DATE NOT NULL,
+                end_date DATE,
+                start_time TIME NOT NULL,
+                end_time TIME NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('''
+            INSERT INTO bookings_new (id, equipment_id, equipment_name, category,
+                user_name, affiliation, booking_date, end_date, start_time, end_time,
+                notes, created_at)
+            SELECT id, equipment_id, equipment_name, category,
+                user_name, affiliation, booking_date, booking_date, start_time, end_time,
+                notes, created_at
+            FROM bookings
+        ''')
+        cursor.execute('DROP TABLE bookings')
+        cursor.execute('ALTER TABLE bookings_new RENAME TO bookings')
+        logger.info("Bookings table migration complete")
     
     # Create indexes for performance optimization
     cursor.execute('''
@@ -567,38 +606,47 @@ def create_booking():
         if validation_errors:
             return jsonify({'error': 'Validation failed', 'details': validation_errors}), 400
 
+        end_date = data.get('end_date', data['booking_date'])
+
         # Check for conflicts and create booking
         with DatabaseManager() as conn:
             cursor = conn.cursor()
 
-            # Optimized conflict detection
+            # Conflict detection for multi-day bookings
+            # Two bookings conflict if their datetime ranges overlap:
+            # NOT (existing_end_datetime <= new_start_datetime OR existing_start_datetime >= new_end_datetime)
             cursor.execute('''
                 SELECT id FROM bookings
-                WHERE equipment_id = ? AND booking_date = ?
-                AND NOT (end_time <= ? OR start_time >= ?)
-            ''', (data['equipment_id'], data['booking_date'],
-                  data['start_time'], data['end_time']))
+                WHERE equipment_id = ?
+                AND NOT (
+                    (COALESCE(end_date, booking_date) || ' ' || end_time) <= (? || ' ' || ?)
+                    OR (booking_date || ' ' || start_time) >= (? || ' ' || ?)
+                )
+            ''', (data['equipment_id'],
+                  data['booking_date'], data['start_time'],
+                  end_date, data['end_time']))
 
             conflict = cursor.fetchone()
             if conflict:
-                return jsonify({'error': 'Time slot already booked'}), 409
+                return jsonify({'error': 'Time slot conflicts with an existing booking'}), 409
 
             # Create booking
             cursor.execute('''
                 INSERT INTO bookings (equipment_id, equipment_name, category,
                                     user_name, affiliation, booking_date,
-                                    start_time, end_time, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    end_date, start_time, end_time, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (data['equipment_id'], data['equipment_name'], data['category'],
                   data['user_name'], data['affiliation'], data['booking_date'],
-                  data['start_time'], data['end_time'], data.get('notes', '')))
+                  end_date, data['start_time'], data['end_time'],
+                  data.get('notes', '')))
 
             booking_id = cursor.lastrowid
-            
+
             logger.info(f"Created booking {booking_id} for {data['equipment_name']} by {data['user_name']}")
-            
+
             return jsonify({
-                'success': True, 
+                'success': True,
                 'booking_id': booking_id,
                 'message': 'Booking created successfully'
             }), 201
