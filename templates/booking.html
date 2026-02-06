@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(`/api/bookings?equipment_id=${equipmentId}`)
                 .then(response => response.json())
                 .then(data => {
-                    const events = data.map(booking => ({
+                    const events = (data.data || []).map(booking => ({
                         id: booking.id,
                         title: `${booking.user_name} (${booking.affiliation})`,
                         start: `${booking.booking_date}T${booking.start_time}`,
@@ -308,14 +308,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 const container = document.getElementById('bookings-list');
-                if (data.length === 0) {
+                const bookings = data.data || [];
+                if (bookings.length === 0) {
                     container.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>No bookings scheduled</p>';
                     return;
                 }
 
                 // Filter future bookings
                 const today = new Date().toISOString().split('T')[0];
-                const futureBookings = data.filter(b => b.booking_date >= today);
+                const futureBookings = bookings.filter(b => b.booking_date >= today);
 
                 if (futureBookings.length === 0) {
                     container.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>No upcoming bookings</p>';
@@ -417,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             showToast('error', 'An error occurred. Please try again.');
         });
-    });
+    }
 
     // Toast notification function
     function showToast(type, message) {
