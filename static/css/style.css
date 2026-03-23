@@ -6,7 +6,7 @@
     --secondary-color: #28a745;
     --accent-color: #6f42c1;
     --text-color: #333;
-    --text-muted: #6c757d;
+    --text-muted: #5a6472;
     --bg-light: #f8f9fa;
     --shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 5px 30px rgba(0, 0, 0, 0.15);
@@ -41,7 +41,7 @@ main {
 .hero-section {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
-    padding: 80px 0;
+    padding: 48px 0;
     position: relative;
     overflow: hidden;
 }
@@ -418,7 +418,7 @@ main {
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .hero-section {
-        padding: 50px 0;
+        padding: 30px 0;
     }
 
     .hero-section h1 {
@@ -441,6 +441,12 @@ main {
     .booking-equipment-image {
         max-height: 80px;
         margin-bottom: 15px;
+    }
+
+    /* Disable sticky form on mobile to prevent overlap */
+    .col-lg-4 .card.sticky-top {
+        position: relative !important;
+        top: auto !important;
     }
 }
 
@@ -489,6 +495,38 @@ main {
 
 .modal-footer {
     border-top: 1px solid #eee;
+}
+
+/* Accessibility: muted text contrast override (WCAG AA) */
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Disabled button feedback */
+.btn:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+/* Form sections */
+.form-section {
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.form-section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+/* Equipment overlay - flex-column for name + button */
+.equipment-overlay {
+    flex-direction: column;
 }
 
 /* Scrollbar */

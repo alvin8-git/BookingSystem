@@ -30,8 +30,10 @@ Built with Flask, SQLite, and Bootstrap. Deployed with Gunicorn and Nginx.
 - **Backdated bookings** — record historical equipment usage
 - **Conflict detection** — prevents double-bookings across date/time ranges
 - **Equipment photo sync** — auto-detects photos and registers equipment
-- **Calendar view** — interactive calendar powered by FullCalendar
-- **Responsive design** — works on desktop and mobile
+- **Calendar view** — interactive calendar powered by FullCalendar; auto-switches to day view on mobile
+- **Accessible UI** — WCAG AA contrast, aria-labels, keyboard-navigable
+- **Loading feedback** — spinner on form submission, Bootstrap confirmation modal for cancellations
+- **Responsive design** — works on desktop and mobile; sticky form disabled on small screens
 - **Production-ready** — Gunicorn + Nginx with systemd service management
 
 ---
@@ -463,7 +465,25 @@ curl http://localhost:8001/api/health
 
 ## Version History
 
-### v1.2.0 (Current)
+### v1.3.0 (Current)
+- Loading spinner on form submission; submit button disabled during request
+- Bootstrap confirmation modal replaces native `confirm()` dialog for booking cancellation
+- WCAG AA contrast fix: muted text colour `#6c757d` → `#5a6472`
+- `aria-label` added to navbar toggler, close buttons, and delete button
+- Calendar auto-switches to day view on mobile (`< 768px`) and on window resize
+- Sticky booking form disabled on mobile to prevent layout overlap
+- Empty states with icons for calendar and bookings list
+- SGT (UTC+8) timezone indicator below submit button
+- Visual feedback (opacity + scale) on calendar event click
+- Form fields grouped into "Who" and "When" sections
+- Equipment name shown in card overlay on hover
+- Hero section padding reduced; `display-4` → `display-5`; redundant CTA removed
+- Back button moved into category/booking page header; bottom back sections removed
+- Navbar active state highlights current page via `request.path`
+- Upcoming bookings count badge in card header
+- "Upcoming Bookings" label replaces "Recent Bookings" on home page
+
+### v1.2.0
 - Multi-day booking support with start/end dates
 - Backdated bookings for past dates
 - Multi-day conflict detection

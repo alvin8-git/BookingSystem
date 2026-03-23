@@ -12,14 +12,19 @@
                 <li class="breadcrumb-item active text-white" aria-current="page">{{ category.name }}</li>
             </ol>
         </nav>
-        <div class="d-flex align-items-center">
-            <div class="category-header-icon me-4">
-                <i class="fas {{ category.icon }}"></i>
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="category-header-icon me-4">
+                    <i class="fas {{ category.icon }}"></i>
+                </div>
+                <div>
+                    <h1 class="display-5 fw-bold mb-2">{{ category.name }}</h1>
+                    <p class="lead mb-0 opacity-75">{{ category.description }}</p>
+                </div>
             </div>
-            <div>
-                <h1 class="display-5 fw-bold mb-2">{{ category.name }}</h1>
-                <p class="lead mb-0 opacity-75">{{ category.description }}</p>
-            </div>
+            <a href="/" class="btn btn-outline-light btn-sm ms-4 flex-shrink-0">
+                <i class="fas fa-arrow-left me-1"></i>All Categories
+            </a>
         </div>
     </div>
 </section>
@@ -47,9 +52,12 @@
                                  class="equipment-image"
                                  loading="lazy">
                             <div class="equipment-overlay">
-                                <span class="book-btn">
-                                    <i class="fas fa-calendar-plus me-2"></i>Book Now
-                                </span>
+                                <div class="text-center">
+                                    <p class="fw-semibold small text-white mb-2">{{ item.name }}</p>
+                                    <span class="book-btn">
+                                        <i class="fas fa-calendar-plus me-2"></i>Book Now
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div class="equipment-info">
@@ -74,12 +82,4 @@
     </div>
 </section>
 
-<!-- Back to Categories -->
-<section class="py-4 bg-light">
-    <div class="container text-center">
-        <a href="/" class="btn btn-outline-primary">
-            <i class="fas fa-arrow-left me-2"></i>Back to All Categories
-        </a>
-    </div>
-</section>
 {% endblock %}

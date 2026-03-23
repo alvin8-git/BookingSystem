@@ -27,16 +27,16 @@
                 <img src="https://en.mgi-tech.com/themes/mgi/Public/Home/images/logo.svg" alt="MGI" height="32" class="me-2" style="filter: brightness(0) invert(1);">
                 <span class="fw-semibold">CEC Equipment Booking</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> Home</a>
+                        <a class="nav-link{% if request.path == '/' %} active{% endif %}" href="/"><i class="fas fa-home me-1"></i> Home</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle{% if request.path.startswith('/category') or request.path.startswith('/book') %} active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-list me-1"></i> Categories
                         </a>
                         <ul class="dropdown-menu">

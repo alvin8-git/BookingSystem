@@ -38,7 +38,7 @@
                      alt="{{ equipment.name }}"
                      class="img-fluid rounded shadow booking-equipment-image">
             </div>
-            <div class="col-md-10">
+            <div class="col-md-8">
                 <h1 class="display-6 fw-bold mb-2">{{ equipment.name }}</h1>
                 <p class="mb-0 opacity-75">
                     <span class="badge bg-white text-dark me-2">
@@ -46,6 +46,11 @@
                     </span>
                     Click on a time slot to make a booking
                 </p>
+            </div>
+            <div class="col-md-2 text-md-end mt-3 mt-md-0">
+                <a href="/category/{{ category_key }}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
             </div>
         </div>
     </div>
@@ -100,56 +105,60 @@
                             <input type="hidden" id="equipment_name" value="{{ equipment.name }}">
                             <input type="hidden" id="category" value="{{ category_key }}">
 
-                            <div class="mb-3">
-                                <label for="user_name" class="form-label">
-                                    <i class="fas fa-user me-1"></i> Your Name <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="user_name"
-                                       placeholder="Enter your full name" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="affiliation" class="form-label">
-                                    <i class="fas fa-building me-1"></i> Affiliation / Lab <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="affiliation"
-                                       placeholder="e.g., NUS Life Sciences Lab" required>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <label for="booking_date" class="form-label">
-                                            <i class="fas fa-calendar me-1"></i> Start Date <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="date" class="form-control" id="booking_date" required>
-                                    </div>
+                            <div class="form-section mb-3">
+                                <p class="form-section-label">Who</p>
+                                <div class="mb-2">
+                                    <label for="user_name" class="form-label">
+                                        <i class="fas fa-user me-1"></i> Your Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="user_name"
+                                           placeholder="Enter your full name" required>
                                 </div>
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <label for="end_date" class="form-label">
-                                            <i class="fas fa-calendar-check me-1"></i> End Date <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="date" class="form-control" id="end_date" required>
-                                    </div>
+                                <div class="mb-0">
+                                    <label for="affiliation" class="form-label">
+                                        <i class="fas fa-building me-1"></i> Affiliation / Lab <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="affiliation"
+                                           placeholder="e.g., NUS Life Sciences Lab" required>
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <label for="start_time" class="form-label">
-                                            <i class="fas fa-clock me-1"></i> Start Time <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="time" class="form-control" id="start_time" required>
+                            <div class="form-section mb-3">
+                                <p class="form-section-label">When</p>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-2">
+                                            <label for="booking_date" class="form-label">
+                                                <i class="fas fa-calendar me-1"></i> Start Date <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" class="form-control" id="booking_date" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-2">
+                                            <label for="end_date" class="form-label">
+                                                <i class="fas fa-calendar-check me-1"></i> End Date <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" class="form-control" id="end_date" required>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <label for="end_time" class="form-label">
-                                            <i class="fas fa-clock me-1"></i> End Time <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="time" class="form-control" id="end_time" required>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-2">
+                                            <label for="start_time" class="form-label">
+                                                <i class="fas fa-clock me-1"></i> Start Time <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="time" class="form-control" id="start_time" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-0">
+                                            <label for="end_time" class="form-label">
+                                                <i class="fas fa-clock me-1"></i> End Time <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="time" class="form-control" id="end_time" required>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -162,23 +171,17 @@
                                           placeholder="Any special requirements..."></textarea>
                             </div>
 
-                            <button type="submit" class="btn btn-primary w-100 btn-lg">
+                            <button type="submit" class="btn btn-primary w-100 btn-lg" id="submit-btn">
                                 <i class="fas fa-check me-2"></i>Confirm Booking
                             </button>
+                            <p class="text-muted small text-center mt-2 mb-0">
+                                <i class="fas fa-globe me-1"></i>All times are in <strong>SGT (UTC+8)</strong>
+                            </p>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
-
-<!-- Back Link -->
-<section class="py-4 bg-light">
-    <div class="container text-center">
-        <a href="/category/{{ category_key }}" class="btn btn-outline-primary">
-            <i class="fas fa-arrow-left me-2"></i>Back to {{ category.name }}
-        </a>
     </div>
 </section>
 
@@ -188,7 +191,7 @@
         <div class="toast-header bg-success text-white">
             <i class="fas fa-check-circle me-2"></i>
             <strong class="me-auto">Success</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
         <div class="toast-body" id="successToastBody">
             Operation completed successfully!
@@ -199,7 +202,7 @@
         <div class="toast-header bg-danger text-white">
             <i class="fas fa-exclamation-triangle me-2"></i>
             <strong class="me-auto">Error</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
         <div class="toast-body" id="errorToastBody">
             An error occurred!
@@ -210,7 +213,7 @@
         <div class="toast-header bg-warning text-dark">
             <i class="fas fa-exclamation-circle me-2"></i>
             <strong class="me-auto">Warning</strong>
-            <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="toast"></button>
+            <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
         <div class="toast-body" id="warningToastBody">
             Please check your input!
@@ -224,15 +227,36 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Booking Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modal-body">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" id="delete-booking-btn">
+                <button type="button" class="btn btn-danger" id="delete-booking-btn" aria-label="Cancel this booking">
                     <i class="fas fa-trash me-1"></i>Cancel Booking
                 </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Cancel Booking</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to cancel this booking? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Go Back</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+                    <i class="fas fa-trash me-1"></i>Yes, Cancel Booking
+                </button>
             </div>
         </div>
     </div>
@@ -263,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize calendar
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek',
+        initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -275,6 +299,13 @@ document.addEventListener('DOMContentLoaded', function() {
         selectable: true,
         selectMirror: true,
         eventColor: '{{ category.color }}',
+        windowResize: function(arg) {
+            if (window.innerWidth < 768) {
+                calendar.changeView('timeGridDay');
+            } else {
+                calendar.changeView('timeGridWeek');
+            }
+        },
         events: function(info, successCallback, failureCallback) {
             fetch(`/api/bookings?equipment_id=${equipmentId}`)
                 .then(response => response.json())
@@ -289,6 +320,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             extendedProps: booking
                         };
                     });
+                    if (events.length === 0) {
+                        const emptyState = document.createElement('div');
+                        emptyState.id = 'calendar-empty-state';
+                        emptyState.className = 'text-center text-muted py-4';
+                        emptyState.innerHTML = '<i class="fas fa-calendar-plus fa-3x mb-3 d-block opacity-50"></i><p class="mb-0">No bookings yet — select a time slot to book</p>';
+                        calendarEl.style.position = 'relative';
+                        const existing = document.getElementById('calendar-empty-state');
+                        if (existing) existing.remove();
+                        calendarEl.parentNode.insertBefore(emptyState, calendarEl.nextSibling);
+                    } else {
+                        const existing = document.getElementById('calendar-empty-state');
+                        if (existing) existing.remove();
+                    }
                     successCallback(events);
                 })
                 .catch(error => {
@@ -320,12 +364,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${booking.notes ? `<tr><th>Notes:</th><td>${booking.notes}</td></tr>` : ''}
                 </table>
             `;
+
+            // Visual feedback on clicked event
+            info.el.style.opacity = '0.6';
+            info.el.style.transform = 'scale(0.97)';
+
+            const bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
+
             document.getElementById('delete-booking-btn').onclick = function() {
-                if (confirm('Are you sure you want to cancel this booking?')) {
+                bookingModal.hide();
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+                document.getElementById('confirm-delete-btn').onclick = function() {
                     deleteBooking(booking.id);
-                }
+                    confirmModal.hide();
+                };
+                confirmModal.show();
             };
-            new bootstrap.Modal(document.getElementById('bookingModal')).show();
+
+            document.getElementById('bookingModal').addEventListener('shown.bs.modal', function() {
+                info.el.style.opacity = '';
+                info.el.style.transform = '';
+            }, { once: true });
+
+            bookingModal.show();
         }
     });
     calendar.render();
@@ -338,7 +399,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const container = document.getElementById('bookings-list');
                 const bookings = data.data || [];
                 if (bookings.length === 0) {
-                    container.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>No bookings scheduled</p>';
+                    container.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-calendar-plus fa-2x mb-2 d-block opacity-50"></i><p class="mb-0 small">No bookings scheduled yet</p></div>';
+                    updateBookingsCountBadge(0, 0);
                     return;
                 }
 
@@ -347,12 +409,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const futureBookings = bookings.filter(b => (b.end_date || b.booking_date) >= today);
 
                 if (futureBookings.length === 0) {
-                    container.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>No upcoming bookings</p>';
+                    container.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-calendar-check fa-2x mb-2 d-block opacity-50"></i><p class="mb-0 small">No upcoming bookings — all clear!</p></div>';
+                    updateBookingsCountBadge(0, 0);
                     return;
                 }
 
+                const shown = futureBookings.slice(0, 10);
                 let html = '<div class="list-group list-group-flush">';
-                futureBookings.slice(0, 10).forEach(booking => {
+                shown.forEach(booking => {
                     html += `
                         <div class="list-group-item d-flex justify-content-between align-items-start">
                             <div>
@@ -367,12 +431,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                 });
                 html += '</div>';
+                if (futureBookings.length > 10) {
+                    html += `<p class="text-muted small text-center mt-2 mb-0">Showing 10 of ${futureBookings.length} upcoming bookings</p>`;
+                }
                 container.innerHTML = html;
+                updateBookingsCountBadge(shown.length, futureBookings.length);
             })
             .catch(error => {
                 console.error('Error loading bookings:', error);
             });
     }
+
+    function updateBookingsCountBadge(shown, total) {
+        const header = document.querySelector('#bookings-list').closest('.card').querySelector('.card-header h5');
+        const existing = header.querySelector('.badge');
+        if (existing) existing.remove();
+        if (total > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary ms-2';
+            badge.textContent = total;
+            header.appendChild(badge);
+        }
+    }
+
     loadBookingsList();
 
     // Form submission
@@ -394,6 +475,10 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast('warning', 'End time must be after start time');
             return;
         }
+
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Confirming…';
 
         const data = {
             equipment_id: equipmentId,
@@ -417,6 +502,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(result => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Confirm Booking';
             if (result.error) {
                 if (result.details) {
                     showToast('error', result.details.join(', '));
@@ -432,6 +519,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Confirm Booking';
             console.error('Error:', error);
             showToast('error', 'An error occurred. Please try again.');
         });
