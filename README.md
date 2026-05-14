@@ -1,21 +1,25 @@
 # MGI Singapore CEC Equipment Booking System
 
-A web-based equipment booking system for managing laboratory equipment reservations across Sequencing, Sample Preparation, and STOmics categories.
+![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Python](https://img.shields.io/badge/python-3.8+-blue?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-WAL_mode-003B57?logo=sqlite&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-Linux-lightgrey?logo=linux)
+![License](https://img.shields.io/badge/license-Proprietary-red)
 
-Built with Flask, SQLite, and Bootstrap. Deployed with Gunicorn and Nginx.
+> Web-based equipment booking system for managing laboratory reservations across Sequencing, Sample Preparation, and STOmics categories. Built with Flask, SQLite, and Bootstrap. Deployed with Gunicorn and Nginx.
 
 ---
 
 ## Table of Contents
 
+- [Quick Start](#quick-start)
 - [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Downloading](#downloading)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Deployment](#deployment)
 - [Managing Equipment](#managing-equipment)
-- [Updating the Application](#updating-the-application)
+- [Sequencer Versions](#sequencer-versions)
 - [API Reference](#api-reference)
 - [Troubleshooting](#troubleshooting)
 - [Version History](#version-history)
@@ -23,122 +27,115 @@ Built with Flask, SQLite, and Bootstrap. Deployed with Gunicorn and Nginx.
 
 ---
 
-## Features
+## Quick Start
 
-- **Multi-category equipment browsing** — Sequencing, Sample Prep, and STOmics
-- **Equipment version tracking** — editable firmware/software version shown beside each sequencer name; visible on both the category and booking pages
-- **Multi-day bookings** — support for bookings spanning multiple days
-- **Backdated bookings** — record historical equipment usage
-- **Conflict detection** — prevents double-bookings across date/time ranges
-- **Equipment photo sync** — auto-detects photos and registers equipment
-- **Calendar view** — interactive calendar powered by FullCalendar; auto-switches to day view on mobile
-- **Accessible UI** — WCAG AA contrast, aria-labels, keyboard-navigable
-- **Loading feedback** — spinner on form submission, Bootstrap confirmation modal for cancellations
-- **Responsive design** — works on desktop and mobile; sticky form disabled on small screens
-- **Production-ready** — Gunicorn + Nginx with systemd service management
+```bash
+# 1. Clone and install
+git clone https://github.com/alvin8-git/BookingSystem.git && cd BookingSystem
+pip install -r requirements.txt
+
+# 2. Configure
+cp .env.example .env
+
+# 3. Initialize database and sync equipment
+python3 -c "from app import init_db; init_db()"
+./deploy.sh update
+
+# 4. Run (development)
+python3 app.py
+# → http://localhost:8118
+
+# 4. Run (production)
+./deploy.sh start
+# → http://<server-ip>:8001
+```
 
 ---
 
-## Prerequisites
+## Features
+
+| Feature | Details |
+|---|---|
+| **Equipment browsing** | Sequencing, Sample Prep, and STOmics categories |
+| **Version tracking** | Editable firmware/software version beside each sequencer; visible on category and booking pages |
+| **Multi-day bookings** | Start and end dates for bookings spanning multiple days |
+| **Backdated bookings** | Record historical equipment usage for past dates |
+| **Conflict detection** | Prevents double-bookings across overlapping date/time ranges |
+| **Equipment photo sync** | Auto-detects photos from folders and registers equipment |
+| **Calendar view** | FullCalendar integration; auto-switches to day view on mobile |
+| **Accessible UI** | WCAG AA contrast, `aria-label` on interactive elements, keyboard-navigable |
+| **Loading feedback** | Spinner on form submit, Bootstrap confirmation modal for cancellations |
+| **Responsive design** | Desktop and mobile; sticky form disabled on small screens |
+| **Production-ready** | Gunicorn + Nginx + systemd service management |
+
+---
+
+## Installation
+
+### Prerequisites
 
 | Requirement | Version |
 |---|---|
 | Python | 3.8+ |
-| pip | Latest |
 | OS | Linux (Ubuntu/Debian recommended) |
 | RAM | 512 MB minimum |
-| Disk | 100 MB+ |
+| Nginx | Optional (production) |
+| systemd | Optional (production) |
 
-**Optional (for production):**
+### Steps
 
-- Nginx (reverse proxy)
-- systemd (service management)
-
----
-
-## Downloading
-
-### Clone from GitHub
-
-```bash
-git clone git@github.com:alvin8-git/BookingSystem.git
-cd BookingSystem
-```
-
-Or using HTTPS:
+**1. Clone the repository**
 
 ```bash
 git clone https://github.com/alvin8-git/BookingSystem.git
 cd BookingSystem
 ```
 
----
-
-## Installation
-
-### Step 1: Create a Python virtual environment
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Step 2: Install dependencies
+**2. Install dependencies**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-This installs:
-- `flask` — web framework
-- `flask-cors` — cross-origin request support
-- `python-dotenv` — environment variable management
-- `gunicorn` — production WSGI server
+Installs: `flask`, `flask-cors`, `python-dotenv`, `gunicorn`
 
-### Step 3: Configure environment variables
+**3. Configure environment**
 
 ```bash
 cp .env.example .env
+# Edit .env as needed — see Configuration section
 ```
 
-Edit `.env` as needed. See [Configuration](#configuration) for all options.
-
-### Step 4: Initialize the database
+**4. Initialize the database**
 
 ```bash
 python3 -c "from app import init_db; init_db()"
 ```
 
-This creates `bookings.db` with the required schema (tables for bookings and equipment registry).
+Creates `bookings.db` with all tables, indexes, and runs any pending migrations automatically.
 
-### Step 5: Set up equipment photos
-
-Ensure the `Equipment Photos/` directory exists with subdirectories for each category:
+**5. Set up equipment photos**
 
 ```
 Equipment Photos/
-├── Sequencing/
-├── Sample Prep/
-└── STOmics/
+├── Sequencing/      ← sequencer images
+├── Sample Prep/     ← sample prep instrument images
+└── STOmics/         ← STOmics instrument images
 ```
 
-Place equipment images in the appropriate category folder. See [Managing Equipment](#managing-equipment) for naming conventions and detailed instructions.
-
-### Step 6: Sync equipment registry
+**6. Sync equipment registry**
 
 ```bash
 ./deploy.sh update
 ```
 
-This scans the photo directories and populates the equipment registry in the database.
-
 ---
 
 ## Configuration
 
-Create a `.env` file in the project root (or copy from `.env.example`):
+All settings are read from `.env` (copy from `.env.example`):
 
-```bash
+```ini
 # Flask
 FLASK_ENV=production
 FLASK_DEBUG=False
@@ -146,7 +143,7 @@ SECRET_KEY=your-secret-key-here
 
 # Server
 HOST=0.0.0.0
-PORT=8118
+PORT=8118                         # dev port; Gunicorn uses 8001
 
 # Database
 DATABASE_PATH=bookings.db
@@ -165,96 +162,66 @@ BUSINESS_HOURS_END=22:00
 EQUIPMENT_PHOTOS_DIR=Equipment Photos
 ```
 
-### Port allocation
+### Port Allocation
 
-| Environment | Port | Description |
-|---|---|---|
-| Development | 8118 | Flask dev server |
-| Production | 8001 | Gunicorn |
+| Environment | Port |
+|---|---|
+| Development (Flask) | 8118 |
+| Production (Gunicorn) | 8001 |
 
 ---
 
 ## Deployment
 
-### Option A: Deployment script (recommended)
-
-The `deploy.sh` script manages the Gunicorn production server.
+### Option A — Deploy script (recommended)
 
 ```bash
-# Start the server
-./deploy.sh start
-
-# Stop the server
-./deploy.sh stop
-
-# Restart the server
-./deploy.sh restart
-
-# Check status
-./deploy.sh status
-
-# View recent logs
-./deploy.sh logs
+./deploy.sh start      # start Gunicorn
+./deploy.sh stop       # stop
+./deploy.sh restart    # restart
+./deploy.sh status     # check if running
+./deploy.sh logs       # view recent logs
+./deploy.sh sync       # update equipment registry and restart
 ```
 
-The production server runs at `http://<your-server-ip>:8001`.
-
-### Option B: systemd service
-
-For automatic startup on boot:
+### Option B — systemd service
 
 ```bash
-# Copy the service file
 sudo cp booking-system.service /etc/systemd/system/
-
-# Reload systemd, enable and start the service
 sudo systemctl daemon-reload
 sudo systemctl enable booking-system
 sudo systemctl start booking-system
 ```
 
-Manage with standard systemd commands:
+Manage with: `systemctl status | restart | stop booking-system`
 
-```bash
-sudo systemctl status booking-system
-sudo systemctl restart booking-system
-sudo systemctl stop booking-system
-```
-
-### Option C: Nginx reverse proxy
-
-To serve the application on port 80 behind Nginx:
+### Option C — Nginx reverse proxy
 
 ```bash
 sudo cp nginx.conf /etc/nginx/sites-available/booking-system
 sudo ln -s /etc/nginx/sites-available/booking-system /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### Development mode
-
-For local development and testing:
+### Updating the application
 
 ```bash
-python3 app.py
+./deploy.sh stop
+git pull origin main
+pip install -r requirements.txt
+python3 -c "from app import init_db; init_db()"   # applies migrations
+./deploy.sh sync
 ```
 
-Access at `http://localhost:8118`.
+> **Backup first:** `cp bookings.db bookings_backup_$(date +%Y%m%d).db`
 
 ---
 
 ## Managing Equipment
 
-Equipment in the booking system is driven entirely by image files in the `Equipment Photos/` directory. To add, remove, or update equipment, you modify the photo files and then sync the registry.
+Equipment is driven entirely by image files in `Equipment Photos/`. The filename (without extension) becomes the display name; the subfolder determines the category.
 
-### Photo naming conventions
-
-- The **filename** (without extension) becomes the **equipment display name**
-- Supported formats: `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`
-- The **subdirectory** determines the **category**
-
-**Example:**
+### Naming convention
 
 | File path | Display name | Category |
 |---|---|---|
@@ -262,126 +229,56 @@ Equipment in the booking system is driven entirely by image files in the `Equipm
 | `Equipment Photos/Sample Prep/MGISP-100.png` | MGISP-100 | Sample Prep |
 | `Equipment Photos/STOmics/Leica DM6 Microscope.avif` | Leica DM6 Microscope | STOmics |
 
-### Adding new equipment
+Supported formats: `.png` `.jpg` `.jpeg` `.webp` `.avif`
 
-1. **Prepare the photo.** Use a clear product image. Any supported format works.
-
-2. **Name the file.** The filename (minus extension) is what users see. For example, to add an instrument called "DNBSEQ-T20", name the file `DNBSEQ-T20.png`.
-
-3. **Place the file** in the correct category folder:
-
-   ```bash
-   cp DNBSEQ-T20.png "Equipment Photos/Sequencing/"
-   ```
-
-4. **Stop the service** (if running in production):
-
-   ```bash
-   ./deploy.sh stop
-   ```
-
-5. **Sync the equipment registry:**
-
-   ```bash
-   ./deploy.sh update
-   ```
-
-6. **Start the service:**
-
-   ```bash
-   ./deploy.sh start
-   ```
-
-   Or combine the sync and restart in one command:
-
-   ```bash
-   ./deploy.sh sync
-   ```
-
-   The `sync` command updates the registry and restarts the server automatically.
-
-7. **Verify.** Open the booking system in your browser and confirm the new equipment appears under the correct category.
-
-### Removing equipment
-
-1. **Delete the photo file** from the category folder:
-
-   ```bash
-   rm "Equipment Photos/Sample Prep/Old Equipment.png"
-   ```
-
-2. **Sync and restart:**
-
-   ```bash
-   ./deploy.sh sync
-   ```
-
-   The equipment is marked as inactive in the database. Existing bookings for that equipment are preserved.
-
-### Updating an equipment photo
-
-1. **Replace the image file** (keep the same filename to retain the same equipment entry):
-
-   ```bash
-   cp new-photo.png "Equipment Photos/Sequencing/DNBSEQ-G400.png"
-   ```
-
-2. **Sync and restart:**
-
-   ```bash
-   ./deploy.sh sync
-   ```
-
-   The system detects the file change via MD5 hash comparison and updates the registry.
-
-### Renaming equipment
-
-Renaming a file is treated as a removal of the old equipment and addition of a new one. Existing bookings linked to the old name are preserved but will reference the old equipment ID.
-
-### Viewing equipment status
+### Add equipment
 
 ```bash
-# Show all registered equipment
-./update_equipment.sh status
-
-# Show recent changes
-./update_equipment.sh changes
+cp DNBSEQ-T20.png "Equipment Photos/Sequencing/"
+./deploy.sh sync          # updates registry and restarts
 ```
+
+### Remove equipment
+
+```bash
+rm "Equipment Photos/Sample Prep/Old Equipment.png"
+./deploy.sh sync          # marks inactive; existing bookings preserved
+```
+
+### Replace a photo
+
+Keep the same filename — the system detects file content changes via MD5 hash.
+
+```bash
+cp new-photo.png "Equipment Photos/Sequencing/DNBSEQ-G400.png"
+./deploy.sh sync
+```
+
+> **Note:** Renaming a file is treated as removal + addition. Existing bookings referencing the old name are preserved.
 
 ---
 
-## Updating the Application
+## Sequencer Versions
 
-### Pulling the latest changes
+Firmware/software versions are stored in the equipment registry and displayed on the category and booking pages. They are pre-seeded on first run and can be edited inline on each sequencer's booking page (pencil icon beside the name).
 
-```bash
-cd /data/alvin/BookingSystem
+| Sequencer | Version |
+|---|---|
+| DNBSEQ-E25 | ECR2.5.1 *(requires update to ECR2.5.2)* |
+| DNBSEQ-G50 | ECR6.0 *(requires update to ECR7.0)* |
+| DNBSEQ-G99 | ECR4.0v2 |
+| DNBSEQ-G400 | ECR7.2 |
+| G100-ER (×2) | G100-E V1.4.1.17 |
+| G400-ER | G400-E V1.2.1.1 |
+| DNBSEQ-T7 | ECR5.1 |
+| DNBSEQ-T1+ | ECR1.0 |
 
-# Stop the running service
-./deploy.sh stop
-
-# Pull updates from GitHub
-git pull origin main
-
-# Install any new dependencies
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Reinitialize the database (applies migrations)
-python3 -c "from app import init_db; init_db()"
-
-# Sync equipment registry
-./deploy.sh update
-
-# Start the service
-./deploy.sh start
-```
-
-### Backing up before an update
+To update a version via API:
 
 ```bash
-# Backup the database
-cp bookings.db bookings_backup_$(date +%Y%m%d).db
+curl -X PUT http://localhost:8001/api/equipment/dnbseq-e25/version \
+     -H "Content-Type: application/json" \
+     -d '{"version": "ECR2.5.2"}'
 ```
 
 ---
@@ -392,125 +289,119 @@ cp bookings.db bookings_backup_$(date +%Y%m%d).db
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/bookings?equipment_id=<id>` | List bookings (optionally filter by equipment) |
-| `POST` | `/api/bookings` | Create a new booking |
+| `GET` | `/api/bookings?equipment_id=<id>` | List bookings (filter by equipment) |
+| `POST` | `/api/bookings` | Create a booking |
 | `DELETE` | `/api/bookings/<id>` | Cancel a booking |
+
+**POST `/api/bookings` body:**
+
+```json
+{
+  "equipment_id": "dnbseq-e25",
+  "equipment_name": "DNBSEQ-E25",
+  "category": "sequencing",
+  "user_name": "Jane Doe",
+  "affiliation": "NUS Lab",
+  "booking_date": "2026-05-20",
+  "end_date": "2026-05-20",
+  "start_time": "09:00",
+  "end_time": "12:00",
+  "notes": ""
+}
+```
 
 ### Equipment
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/equipment` | Get equipment list |
-| `POST` | `/api/equipment/sync` | Trigger equipment registry sync |
-| `PUT` | `/api/equipment/<id>/version` | Update equipment version string |
+| `GET` | `/api/equipment` | List all registered equipment |
+| `POST` | `/api/equipment/sync` | Trigger photo-folder sync |
+| `PUT` | `/api/equipment/<id>/version` | Update version string |
 
 ### System
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/health` | Health check (includes version and DB status) |
-| `GET` | `/equipment-photos/<path>` | Serve equipment photos |
+| `GET` | `/api/health` | Health check — DB status, booking count, config |
+| `GET` | `/equipment-photos/<path>` | Serve equipment photo |
 
 ### Pages
 
 | Endpoint | Description |
 |---|---|
-| `/` | Landing page with category overview |
-| `/category/<category_key>` | Equipment listing by category |
-| `/book/<category_key>/<equipment_id>` | Booking page for specific equipment |
+| `/` | Home — category overview |
+| `/category/<key>` | Equipment grid (`sequencing` / `sample_prep` / `stomics`) |
+| `/book/<key>/<equipment_id>` | Booking calendar + form for one piece of equipment |
 
 ---
 
 ## Troubleshooting
 
-### Port already in use
+<details>
+<summary><strong>Port already in use</strong></summary>
 
 ```bash
 sudo lsof -i :8001
 sudo kill <PID>
 ```
+</details>
 
-### Database errors
+<details>
+<summary><strong>Equipment not showing up</strong></summary>
+
+1. Confirm the image is in the correct `Equipment Photos/<Category>/` folder.
+2. Confirm the extension is `.png`, `.jpg`, `.jpeg`, `.webp`, or `.avif`.
+3. Run `./deploy.sh sync`.
+4. Check `tail -f logs/equipment_update.log`.
+</details>
+
+<details>
+<summary><strong>Database errors / reset</strong></summary>
 
 ```bash
-# Check file permissions
+# Check permissions
 ls -la bookings.db
 
-# Reinitialize (WARNING: deletes all data)
+# Full reset (WARNING: deletes all bookings)
+cp bookings.db bookings_backup_$(date +%Y%m%d).db
 rm bookings.db
 python3 -c "from app import init_db; init_db()"
-./deploy.sh update
+./deploy.sh sync
 ```
+</details>
 
-### Equipment not showing up
-
-1. Confirm the photo is in the correct folder under `Equipment Photos/`.
-2. Confirm the file extension is one of: `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`.
-3. Run `./deploy.sh sync` to update the registry and restart the server.
-4. Check the log: `tail -f logs/equipment_update.log`.
-
-### Enable debug logging
+<details>
+<summary><strong>Enable debug logging</strong></summary>
 
 ```bash
 export LOG_LEVEL=DEBUG
 ./deploy.sh restart
 tail -f logs/error.log
 ```
+</details>
 
-### Health check
+<details>
+<summary><strong>Health check</strong></summary>
 
 ```bash
 curl http://localhost:8001/api/health
 ```
+</details>
 
 ---
 
 ## Version History
 
-### v1.4.0 (Current)
-- Equipment version field added to registry — pre-seeded for all sequencers
-- Editable version displayed beside equipment name on booking page (inline pencil edit)
-- Version shown below equipment name on category page
-- New API: `PUT /api/equipment/<id>/version`
+| Version | Date | Highlights |
+|---|---|---|
+| **v1.4.0** | 2026-05-14 | Equipment version tracking; editable inline on booking page; pre-seeded for all sequencers |
+| v1.3.0 | 2026-03-23 | Accessibility (WCAG AA), mobile calendar view, Bootstrap confirm modal, loading spinner, empty states |
+| v1.2.0 | 2025 | Multi-day bookings, backdated bookings, multi-day conflict detection |
+| v1.1.1 | 2025 | Equipment photo auto-sync, file hash change tracking |
+| v1.1.0 | 2025 | Gunicorn + Nginx deployment, systemd integration, WAL mode, security headers |
+| v1.0.0 | 2025 | Initial release |
 
-### v1.3.0
-- Loading spinner on form submission; submit button disabled during request
-- Bootstrap confirmation modal replaces native `confirm()` dialog for booking cancellation
-- WCAG AA contrast fix: muted text colour `#6c757d` → `#5a6472`
-- `aria-label` added to navbar toggler, close buttons, and delete button
-- Calendar auto-switches to day view on mobile (`< 768px`) and on window resize
-- Sticky booking form disabled on mobile to prevent layout overlap
-- Empty states with icons for calendar and bookings list
-- SGT (UTC+8) timezone indicator below submit button
-- Visual feedback (opacity + scale) on calendar event click
-- Form fields grouped into "Who" and "When" sections
-- Equipment name shown in card overlay on hover
-- Hero section padding reduced; `display-4` → `display-5`; redundant CTA removed
-- Back button moved into category/booking page header; bottom back sections removed
-- Navbar active state highlights current page via `request.path`
-- Upcoming bookings count badge in card header
-- "Upcoming Bookings" label replaces "Recent Bookings" on home page
-
-### v1.2.0
-- Multi-day booking support with start/end dates
-- Backdated bookings for past dates
-- Multi-day conflict detection
-- Fixed booking page stall caused by JS syntax error
-- Fixed API response format mismatch
-
-### v1.1.1
-- Automatic equipment photo detection and sync
-- Equipment registry with file hash change tracking
-- Equipment management scripts (`deploy.sh update/sync`, `update_equipment.sh`)
-
-### v1.1.0
-- Production deployment with Gunicorn and Nginx
-- systemd service integration
-- Database optimization (WAL mode, indexing)
-- Security headers and CORS
-
-### v1.0.0
-- Initial release with core booking functionality
+Full changelog: [CHANGES.md](CHANGES.md)
 
 ---
 
