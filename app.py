@@ -218,6 +218,28 @@ def init_db():
         )
     ''')
 
+    # Migration: add version column to equipment_registry if missing
+    cursor.execute("PRAGMA table_info(equipment_registry)")
+    eq_columns = [row[1] for row in cursor.fetchall()]
+    if 'version' not in eq_columns:
+        cursor.execute("ALTER TABLE equipment_registry ADD COLUMN version TEXT DEFAULT ''")
+        initial_versions = {
+            'dnbseq-e25':   'ECR2.5.1 (requires update to ECR2.5.2)',
+            'dnbseq-g50':   'ECR6.0 (requires update to ECR7.0)',
+            'dnbseq-g99':   'ECR4.0v2',
+            'dnbseq-g400':  'ECR7.2',
+            'g100-er':      'G100-E V1.4.1.17',
+            'g400-er':      'G400-E V1.2.1.1',
+            'dnbseq-t7':    'ECR5.1',
+            'dnbseq-t1plus': 'ECR1.0',
+        }
+        for eq_id, ver in initial_versions.items():
+            cursor.execute(
+                "UPDATE equipment_registry SET version = ? WHERE equipment_id = ?",
+                (ver, eq_id)
+            )
+        logger.info("Equipment registry migrated: added version column with initial values")
+
     # Migration: add end_date column if missing, and recreate table if old CHECK constraints exist
     cursor.execute("PRAGMA table_info(bookings)")
     columns = [row[1] for row in cursor.fetchall()]
@@ -301,7 +323,8 @@ def get_equipment_list(category_key):
                     'id': eq['equipment_id'],
                     'name': eq['equipment_name'],
                     'image': eq['image_filename'],
-                    'category': eq['category']
+                    'category': eq['category'],
+                    'version': eq.get('version', '') or ''
                 })
             return sorted(equipment, key=lambda x: x['name'])
         
@@ -333,7 +356,8 @@ def get_equipment_list_fallback(category_key):
                 'id': equipment_id,
                 'name': name,
                 'image': filename,
-                'category': category_key
+                'category': category_key,
+                'version': ''
             })
 
     return sorted(equipment, key=lambda x: x['name'])
@@ -720,6 +744,30 @@ def sync_equipment_api():
         
     except Exception as e:
         logger.error(f"Error in equipment sync API: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/equipment/<equipment_id>/version', methods=['PUT'])
+def update_equipment_version(equipment_id):
+    """Update the version string for a piece of equipment"""
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+        data = request.get_json()
+        version = (data.get('version') or '').strip()
+        if len(version) > 100:
+            return jsonify({'error': 'Version string too long (max 100 characters)'}), 400
+        with DatabaseManager() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                'UPDATE equipment_registry SET version = ?, updated_at = CURRENT_TIMESTAMP WHERE equipment_id = ?',
+                (version, equipment_id)
+            )
+            if cursor.rowcount == 0:
+                return jsonify({'error': 'Equipment not found'}), 404
+        logger.info(f"Updated version for {equipment_id}: {version}")
+        return jsonify({'success': True, 'version': version})
+    except Exception as e:
+        logger.error(f"Error updating version for {equipment_id}: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/api/health', methods=['GET'])

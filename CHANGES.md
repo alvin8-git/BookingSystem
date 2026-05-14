@@ -4,6 +4,23 @@ All notable changes to the CEC Equipment Booking System.
 
 ---
 
+## v1.4.0 — 2026-05-14
+
+### Equipment Version Tracking
+- Added `version` column to `equipment_registry` database table
+- Sequencer firmware/software versions pre-seeded: DNBSEQ-E25, G50, G99, G400, G100-ER, G400-ER, T7, T1+
+- Version displayed in smaller muted text beside equipment name on the booking page header
+- Version displayed below equipment name on the category (equipment grid) page
+- Inline edit: pencil icon on booking page lets users update the version in place (Enter to save, Escape to cancel)
+- New API endpoint: `PUT /api/equipment/<equipment_id>/version` — accepts `{"version": "..."}`, max 100 characters
+
+### Files Changed
+- `app.py`
+- `templates/booking.html`
+- `templates/category.html`
+
+---
+
 ## v1.3.0 — 2026-03-23
 
 ### Accessibility

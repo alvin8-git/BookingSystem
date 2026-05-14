@@ -39,7 +39,24 @@
                      class="img-fluid rounded shadow booking-equipment-image">
             </div>
             <div class="col-md-8">
-                <h1 class="display-6 fw-bold mb-2">{{ equipment.name }}</h1>
+                <h1 class="display-6 fw-bold mb-2">
+                    {{ equipment.name }}
+                    <span id="version-display-wrapper" class="ms-2">
+                        <span id="version-text" class="text-white-50 fw-normal" style="font-size:0.85rem">{{ equipment.version }}</span>
+                        <button id="version-edit-btn" class="btn btn-link btn-sm p-0 ms-1 text-white-50" title="Edit version" aria-label="Edit version" style="font-size:0.75rem;vertical-align:middle">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </span>
+                </h1>
+                <div id="version-edit-wrapper" class="d-none mb-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <input type="text" id="version-input" class="form-control form-control-sm"
+                               value="{{ equipment.version }}" placeholder="e.g. ECR2.5.1" maxlength="100"
+                               style="max-width:280px;background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.4);color:#fff">
+                        <button id="version-save-btn" class="btn btn-sm btn-light">Save</button>
+                        <button id="version-cancel-btn" class="btn btn-sm btn-outline-light">Cancel</button>
+                    </div>
+                </div>
                 <p class="mb-0 opacity-75">
                     <span class="badge bg-white text-dark me-2">
                         <i class="fas {{ category.icon }} me-1"></i>{{ category.name }}
@@ -545,6 +562,59 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast('error', 'An error occurred. Please try again.');
         });
     }
+
+    // Version inline editing
+    const versionText = document.getElementById('version-text');
+    const versionDisplayWrapper = document.getElementById('version-display-wrapper');
+    const versionEditWrapper = document.getElementById('version-edit-wrapper');
+    const versionInput = document.getElementById('version-input');
+    const versionSaveBtn = document.getElementById('version-save-btn');
+    const versionCancelBtn = document.getElementById('version-cancel-btn');
+
+    document.getElementById('version-edit-btn').addEventListener('click', function() {
+        versionDisplayWrapper.classList.add('d-none');
+        versionEditWrapper.classList.remove('d-none');
+        versionInput.focus();
+        versionInput.select();
+    });
+
+    versionCancelBtn.addEventListener('click', function() {
+        versionEditWrapper.classList.add('d-none');
+        versionDisplayWrapper.classList.remove('d-none');
+        versionInput.value = versionText.textContent.trim();
+    });
+
+    versionSaveBtn.addEventListener('click', function() {
+        const newVersion = versionInput.value.trim();
+        versionSaveBtn.disabled = true;
+        versionSaveBtn.textContent = 'Saving…';
+        fetch(`/api/equipment/${equipmentId}/version`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({version: newVersion})
+        })
+        .then(r => r.json())
+        .then(result => {
+            if (result.success) {
+                versionText.textContent = newVersion;
+                versionEditWrapper.classList.add('d-none');
+                versionDisplayWrapper.classList.remove('d-none');
+                showToast('success', 'Version updated');
+            } else {
+                showToast('error', result.error || 'Failed to update version');
+            }
+        })
+        .catch(() => showToast('error', 'Failed to update version'))
+        .finally(() => {
+            versionSaveBtn.disabled = false;
+            versionSaveBtn.textContent = 'Save';
+        });
+    });
+
+    versionInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') versionSaveBtn.click();
+        if (e.key === 'Escape') versionCancelBtn.click();
+    });
 
     // Toast notification function
     function showToast(type, message) {

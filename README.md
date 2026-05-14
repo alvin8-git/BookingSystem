@@ -26,6 +26,7 @@ Built with Flask, SQLite, and Bootstrap. Deployed with Gunicorn and Nginx.
 ## Features
 
 - **Multi-category equipment browsing** — Sequencing, Sample Prep, and STOmics
+- **Equipment version tracking** — editable firmware/software version shown beside each sequencer name; visible on both the category and booking pages
 - **Multi-day bookings** — support for bookings spanning multiple days
 - **Backdated bookings** — record historical equipment usage
 - **Conflict detection** — prevents double-bookings across date/time ranges
@@ -401,6 +402,7 @@ cp bookings.db bookings_backup_$(date +%Y%m%d).db
 |---|---|---|
 | `GET` | `/api/equipment` | Get equipment list |
 | `POST` | `/api/equipment/sync` | Trigger equipment registry sync |
+| `PUT` | `/api/equipment/<id>/version` | Update equipment version string |
 
 ### System
 
@@ -465,7 +467,13 @@ curl http://localhost:8001/api/health
 
 ## Version History
 
-### v1.3.0 (Current)
+### v1.4.0 (Current)
+- Equipment version field added to registry — pre-seeded for all sequencers
+- Editable version displayed beside equipment name on booking page (inline pencil edit)
+- Version shown below equipment name on category page
+- New API: `PUT /api/equipment/<id>/version`
+
+### v1.3.0
 - Loading spinner on form submission; submit button disabled during request
 - Bootstrap confirmation modal replaces native `confirm()` dialog for booking cancellation
 - WCAG AA contrast fix: muted text colour `#6c757d` → `#5a6472`

@@ -99,7 +99,8 @@ CREATE TABLE equipment_registry (
     folder_path TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN DEFAULT 1
+    is_active BOOLEAN DEFAULT 1,
+    version TEXT DEFAULT ''
 );
 ```
 
@@ -108,6 +109,7 @@ CREATE TABLE equipment_registry (
 - **equipment_name**: Display name from filename (without extension)
 - **file_hash**: MD5 hash for detecting file changes
 - **is_active**: Flag for active/inactive equipment
+- **version**: Free-text firmware/software version string (e.g. `ECR2.5.1`); editable via the booking page UI or `PUT /api/equipment/<id>/version`
 
 ## 🔄 Automatic Detection
 
